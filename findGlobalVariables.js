@@ -40,15 +40,17 @@ const findAllVariablesAndTheirLineNumbers = function(fileName) {
   );
 };
 
-const main = function() {
-  const fileName = process.argv[2];
+const mapper = function(fileName) {
   let allVariables = findAllVariablesAndTheirLineNumbers(fileName);
   let rangesOfAllFunctions = findRangesOfAllFunctions(fileName);
-  let allGlobalVariables = findGlobalVariables(
-    allVariables,
-    rangesOfAllFunctions
-  );
-  console.log(allGlobalVariables);
+  let allGlobalVariables = findGlobalVariables(allVariables, rangesOfAllFunctions);
+  return allGlobalVariables;
+}
+
+const main = function() {
+  const files = process.argv.slice(2);
+  let allGlobalVariablesInAllFiles = files.map(mapper);
+  console.log(allGlobalVariablesInAllFiles);
 };
 
 main();
