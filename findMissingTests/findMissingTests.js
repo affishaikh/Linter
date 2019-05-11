@@ -11,37 +11,54 @@ const functionExtractor = function(functionsExtractedSofar, declaration) {
 };
 
 const calleeExtractor = function(calleeExtractedSofar, functionCall) {
-    if(!calleeExtractedSofar.includes(functionCall.callee.name)){
-        calleeExtractedSofar.push(functionCall.callee.name);
-    }
-    return calleeExtractedSofar;
-}
+  if (!calleeExtractedSofar.includes(functionCall.callee.name)) {
+    calleeExtractedSofar.push(functionCall.callee.name);
+  }
+  return calleeExtractedSofar;
+};
 
 const extractAllFunctions = function(JSONOfAllVaraibleDeclarations) {
-  return JSONOfAllVaraibleDeclarations.reduce(functionExtractor, []);
+  const keys = Object.keys(JSONOfAllVaraibleDeclarations);
+  const allFunctions = {};
+  for (key of keys) {
+    allFunctions[key] = JSONOfAllVaraibleDeclarations[key].reduce(
+      functionExtractor,
+      []
+    );
+  }
+  return allFunctions;
 };
 
 const extractAllCallee = function(JSONOfAllFunctionCalls) {
-    return JSONOfAllFunctionCalls.reduce(calleeExtractor, []);
-}
+  const keys = Object.keys(JSONOfAllFunctionCalls);
+  let allCallee = [];
+  for (key of keys) {
+    let calls = JSONOfAllFunctionCalls[key].reduce(calleeExtractor, []);
+    allCallee = allCallee.concat(calls);
+  }
+  return allCallee;
+};
 
 const getAllUntestedFunctions = function(allFunctions, allCallee) {
-    return allFunctions.filter(x => !allCallee.includes(x.name))
-}
+  const keys = Object.keys(allFunctions);
+  let allUntestedFunctions = {};
+  for(key of keys) {
+   allUntestedFunctions[key] = allFunctions[key].filter(x => !allCallee.includes(x.name));
+  }
+  return allUntestedFunctions;
+};
 
 const findMissingTests = function(fileNames) {
-  const srcFile = fileNames[0];
-  const testFile = fileNames[1];
   const JSONOfAllVaraibleDeclarations = JSON.parse(
-    execSync("grasp -j 'var-dec' " + srcFile)
+    execSync("grasp -j 'var-dec' src/**/*.js")
   );
   const allFunctions = extractAllFunctions(JSONOfAllVaraibleDeclarations);
   const JSONOfAllFunctionCalls = JSON.parse(
-    execSync("grasp -j 'call' " + testFile)
+    execSync("grasp -j 'call' test/**/*.js")
   );
   const allCallee = extractAllCallee(JSONOfAllFunctionCalls);
   const allUntestedFunctions = getAllUntestedFunctions(allFunctions, allCallee);
   return allUntestedFunctions;
 };
 
-console.log(findMissingTests(process.argv.slice(2)));
+console.log(findMissingTests());
